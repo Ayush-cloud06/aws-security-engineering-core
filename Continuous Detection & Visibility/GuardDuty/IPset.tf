@@ -67,7 +67,7 @@ resource "aws_s3_bucket_policy" "allow_guardduty" {
         Effect    = "Allow"
         Principal = { Service = "guardduty.amazonaws.com" }
         Action    = ["s3:GetObject", "s3:GetBucketLocation"]
-        Resource  = "${aws_s3_bucket.ipbucket.arn}/*"
+        Resource  = [aws_s3_bucket.ipbucket.arn, "${aws_s3_bucket.ipbucket.arn}/*"]
       }
     ]
   })
