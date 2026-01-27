@@ -21,7 +21,7 @@ resource "aws_securityhub_configuration_policy" "baseline" {
   }
 
   depends_on = [
-    aws_securityhub_organization_configuration.orgConfig
+    aws_securityhub_organization_configuration.org
   ]
 }
 /*

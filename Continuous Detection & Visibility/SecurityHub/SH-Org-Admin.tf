@@ -4,7 +4,10 @@ resource "aws_organizations_organization" "org" {
   feature_set                   = "ALL"
 }
 
-resource "aws_securityhub_account" "org" {}
+data "aws_caller_identity" "current" {}
+data "aws_organizations_organization" "org" {}
+
+resource "aws_securityhub_account" "hub" {}
 
 resource "aws_securityhub_organization_admin_account" "org" {
   depends_on = [aws_organizations_organization.org, aws_securityhub_account.hub]
