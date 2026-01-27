@@ -7,8 +7,8 @@
 resource "aws_guardduty_detector" "main" {
   enable = true
 
-  # To enable extra protection features
-
+  # To enable extra protection features if we are using datasources
+  /*        
   datasources {
     s3_logs {
       enable = true
@@ -25,7 +25,7 @@ resource "aws_guardduty_detector" "main" {
         }
       }
     }
-  }
+  } */
 }
 
 # we can also import by using import block

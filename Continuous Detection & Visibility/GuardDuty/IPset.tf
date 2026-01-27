@@ -56,3 +56,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "ipbucket" {
     }
   }
 }
+
+resource "aws_s3_bucket_policy" "allow_guardduty" {
+  bucket = aws_s3_bucket.ipbucket.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowGuardDutyRead"
+        Effect    = "Allow"
+        Principal = { Service = "guardduty.amazonaws.com" }
+        Action    = ["s3:GetObject", "s3:GetBucketLocation"]
+        Resource  = "${aws_s3_bucket.ipbucket.arn}/*"
+      }
+    ]
+  })
+}
