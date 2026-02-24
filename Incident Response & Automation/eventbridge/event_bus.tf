@@ -18,7 +18,7 @@ resource "aws_sqs_queue" "event_dlq" {
 
 # The Event Bus
 # This is the dedicated lane for Security traffic.
-# We want a clean signal: Only Security Hub & GuardDuty allowed here.
+# For a clean signal: Only Security Hub & GuardDuty allowed here.
 resource "aws_cloudwatch_event_bus" "security_bus" {
   name = "security-bus"
 
