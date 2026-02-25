@@ -1,3 +1,4 @@
+# ----------- EC2 quarantine ------------
 # 1. Upload the Runbook to AWS SSM
 resource "aws_ssm_document" "quarantine_ec2" {
   name            = "IR-Quarantine-EC2"
@@ -42,4 +43,49 @@ resource "aws_iam_policy" "ssm_ec2_quarantine" {
 resource "aws_iam_role_policy_attachment" "ssm_attach" {
   role       = aws_iam_role.ssm_automation_role.name
   policy_arn = aws_iam_policy.ssm_ec2_quarantine.arn
+}
+
+# ---------- advance containment ---------
+resource "aws_ssm_document" "advanced_containment" {
+  name            = "IR-Advanced-EC2-Containment"
+  document_type   = "Automation"
+  document_format = "YAML"
+  content         = file("${path.module}/runbooks/advanced_containment.yaml")
+
+  tags = {
+    Purpose = "Incident Response"
+    Action  = "Forensic Snapshot and Isolation"
+  }
+}
+
+resource "aws_iam_policy" "ssm_advanced_quarantine" {
+  name        = "ssm-advanced-quarantine-policy"
+  description = "Allows SSM to snapshot, tag, and isolate EC2s"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "IsolateNetwork"
+        Effect   = "Allow"
+        Action   = ["ec2:ModifyInstanceAttribute"]
+        Resource = "*"
+      },
+      {
+        Sid    = "ForensicSnapshots"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:CreateSnapshot",
+          "ec2:CreateTags"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_advanced_attach" {
+  role       = aws_iam_role.ssm_automation_role.name
+  policy_arn = aws_iam_policy.ssm_advanced_quarantine.arn
 }

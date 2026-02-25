@@ -1,0 +1,65 @@
+description: "Enterprise Playbook: Snapshots, tags, and isolates a compromised EC2 instance."
+schemaVersion: "0.3"
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  InstanceId:
+    type: "String"
+    description: "The ID of the compromised EC2 instance"
+  QuarantineSecurityGroupId:
+    type: "String"
+    description: "The ID of the deny-all quarantine security group"
+  AutomationAssumeRole:
+    type: "String"
+    description: "The ARN of the role that allows SSM to perform these actions"
+
+mainSteps:
+# STEP 1: Evidence Preservation (The GRC flex)
+- name: "CreateForensicSnapshot"
+  action: "aws:executeScript"
+  description: "Takes a snapshot of the root EBS volume for forensic analysis"
+  inputs:
+    Runtime: python3.8
+    Handler: script_handler
+    Script: |-
+      import boto3
+      def script_handler(events, context):
+          ec2 = boto3.client('ec2')
+          instance_id = events['InstanceId']
+          # Get the volumes attached to the instance
+          response = ec2.describe_instances(InstanceIds=[instance_id])
+          volumes = response['Reservations'][0]['Instances'][0]['BlockDeviceMappings']
+          
+          for vol in volumes:
+              vol_id = vol['Ebs']['VolumeId']
+              ec2.create_snapshot(
+                  VolumeId=vol_id,
+                  Description=f"Forensic Snapshot for compromised instance {instance_id}",
+                  TagSpecifications=[{'ResourceType': 'snapshot', 'Tags': [{'Key': 'Purpose', 'Value': 'Forensics'}]}]
+              )
+          return {"status": "Snapshots created"}
+    InputPayload:
+      InstanceId: "{{ InstanceId }}"
+
+# STEP 2: Tag the Instance
+- name: "TagAsQuarantined"
+  action: "aws:executeAwsApi"
+  description: "Tags the instance to alert admins it is under investigation"
+  inputs:
+    Service: "ec2"
+    Api: "CreateTags"
+    Resources:
+    - "{{ InstanceId }}"
+    Tags:
+    - Key: "IncidentState"
+      Value: "Quarantined"
+
+# STEP 3: Network Isolation
+- name: "IsolateNetwork"
+  action: "aws:executeAwsApi"
+  description: "Removes all SGs and attaches the Quarantine SG"
+  inputs:
+    Service: "ec2"
+    Api: "ModifyInstanceAttribute"
+    InstanceId: "{{ InstanceId }}"
+    Groups:
+    - "{{ QuarantineSecurityGroupId }}"
