@@ -1,0 +1,24 @@
+description: "Isolates a compromised EC2 instance by swapping its Security Group to a Quarantine SG"
+schemaVersion: "0.3"
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  InstanceId:
+    type: "String"
+    description: "The ID of the compromised EC2 instance"
+  QuarantineSecurityGroupId:
+    type: "String"
+    description: "The ID of the deny-all security group"
+  AutomationAssumeRole:
+    type: "String"
+    description: "The ARN of the role that allows SSM to perform these actions"
+
+mainSteps:
+- name: "QuarantineInstance"
+  action: "aws:executeAwsApi"
+  description: "Changes the security groups of the instance to ONLY the quarantine group"
+  inputs:
+    Service: "ec2"
+    Api: "ModifyInstanceAttribute"
+    InstanceId: "{{ InstanceId }}"
+    Groups:
+    - "{{ QuarantineSecurityGroupId }}"
