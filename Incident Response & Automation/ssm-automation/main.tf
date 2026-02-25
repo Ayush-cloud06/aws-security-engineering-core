@@ -60,15 +60,18 @@ resource "aws_ssm_document" "advanced_containment" {
 
 resource "aws_iam_policy" "ssm_advanced_quarantine" {
   name        = "ssm-advanced-quarantine-policy"
-  description = "Allows SSM to snapshot, tag, and isolate EC2s"
+  description = "Allows SSM to fully contain EC2s and alert SOC"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "IsolateNetwork"
-        Effect   = "Allow"
-        Action   = ["ec2:ModifyInstanceAttribute"]
+        Sid    = "IsolateNetworkAndTags"
+        Effect = "Allow"
+        Action = [
+          "ec2:ModifyInstanceAttribute",
+          "ec2:CreateTags"
+        ]
         Resource = "*"
       },
       {
@@ -76,10 +79,24 @@ resource "aws_iam_policy" "ssm_advanced_quarantine" {
         Effect = "Allow"
         Action = [
           "ec2:DescribeInstances",
-          "ec2:CreateSnapshot",
-          "ec2:CreateTags"
+          "ec2:CreateSnapshot"
         ]
         Resource = "*"
+      },
+      {
+        Sid    = "NukeIAMProfile"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeIamInstanceProfileAssociations",
+          "ec2:DisassociateIamInstanceProfile"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid      = "AlertSOC"
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
+        Resource = "*" # Or lock down to your specific SNS ARN for extra GRC points
       }
     ]
   })

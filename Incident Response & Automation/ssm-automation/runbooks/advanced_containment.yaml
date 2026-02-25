@@ -1,4 +1,4 @@
-description: "Enterprise Playbook: Snapshots, tags, and isolates a compromised EC2 instance."
+description: "Enterprise Playbook: Snapshots, tags, isolates, and strips IAM from a compromised EC2 instance."
 schemaVersion: "0.3"
 assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
@@ -11,9 +11,12 @@ parameters:
   AutomationAssumeRole:
     type: "String"
     description: "The ARN of the role that allows SSM to perform these actions"
+  SNSTopicArn:
+    type: "String"
+    description: "The ARN of the SNS topic for SOC alerts"
 
 mainSteps:
-# STEP 1: Evidence Preservation (The GRC flex)
+# STEP 1: Evidence Preservation
 - name: "CreateForensicSnapshot"
   action: "aws:executeScript"
   description: "Takes a snapshot of the root EBS volume for forensic analysis"
@@ -63,3 +66,43 @@ mainSteps:
     InstanceId: "{{ InstanceId }}"
     Groups:
     - "{{ QuarantineSecurityGroupId }}"
+
+# STEP 4: Prevent Lateral Movement 
+- name: "DetachIAMRole"
+  action: "aws:executeScript"
+  description: "Finds and removes the IAM instance profile so malware can't use AWS APIs"
+  inputs:
+    Runtime: python3.8
+    Handler: script_handler
+    Script: |-
+      import boto3
+      def script_handler(events, context):
+          ec2 = boto3.client('ec2')
+          instance_id = events['InstanceId']
+          
+          # Find the IAM Association ID for this instance
+          response = ec2.describe_iam_instance_profile_associations(
+              Filters=[{'Name': 'instance-id', 'Values': [instance_id]}]
+          )
+          
+          associations = response.get('IamInstanceProfileAssociations', [])
+          if associations:
+              assoc_id = associations[0]['AssociationId']
+              # Rip it off
+              ec2.disassociate_iam_instance_profile(AssociationId=assoc_id)
+              return {"status": f"Detached IAM profile {assoc_id}"}
+          else:
+              return {"status": "No IAM profile attached"}
+    InputPayload:
+      InstanceId: "{{ InstanceId }}"
+
+# STEP 5: Drop the Receipts (
+- name: "NotifySOC"
+  action: "aws:executeAwsApi"
+  description: "Sends a success message to the Security SNS Topic"
+  inputs:
+    Service: "sns"
+    Api: "Publish"
+    TopicArn: "{{ SNSTopicArn }}"
+    Subject: "🚨 AUTO-CONTAINMENT SUCCESS: EC2 Compromise"
+    Message: "SSM Automation successfully isolated, snapshotted, and stripped IAM from Instance: {{ InstanceId }}"
