@@ -64,8 +64,8 @@ resource "aws_sfn_state_machine" "malware_containment" {
 
 
   definition = templatefile("${path.module}/playbooks/malware_containment.asl.json", {
-    quarantine_sg_id = var.quarantine_sg_id
-    sns_topic_arn    = var.soc_approval_sns_arn
+    quarantine_sg_id = "sg-0123456789abcdef0"
+    sns_topic_arn    = "arn:aws:sns:ap-south-1:123456789012:soc-critical-alerts"
   })
 
   logging_configuration {
