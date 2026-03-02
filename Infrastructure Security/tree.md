@@ -145,7 +145,7 @@ Infrastructure-Security/
 │   ├── resource_tag_policies.tf
 │   └── region_restriction.tf
 │
-├── attack-simulation/           # dversary Testing
+├── attack-simulation/           #    dversary Testing
 │   │
 │   ├── lateral_movement_test.md
 │   ├── public_exposure_test.md
