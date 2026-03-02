@@ -144,6 +144,9 @@ Infrastructure-Security/
 │   ├── logging_enforcement.tf
 │   ├── resource_tag_policies.tf
 │   └── region_restriction.tf
+│   └── backup.tf
+│    ── backup-policies.tf
+│   └── dr_strategies.tf
 │
 ├── attack-simulation/           #    dversary Testing
 │   │
