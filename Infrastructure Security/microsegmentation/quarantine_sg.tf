@@ -2,7 +2,7 @@ resource "aws_security_group" "quarantine_sg" {
   name        = "quarantine-sg"
   description = "Isolation security group for incident response containment"
 
-  vpc_id                 = aws_vpc.secure_vpc.id
+  vpc_id                 = var.vpc_id
   revoke_rules_on_delete = true
 
   tags = {

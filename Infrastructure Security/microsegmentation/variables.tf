@@ -6,3 +6,8 @@ variable "vpc_id" {
 output "cidr_block" {
   value = aws_vpc.secure_vpc.cidr_block
 }
+
+variable "app_subnet_ids" {
+  description = "Application subnet IDs"
+  type        = list(string)
+}
