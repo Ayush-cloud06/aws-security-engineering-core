@@ -21,6 +21,31 @@ This repo exists to:
 ---
 
 ### Design Philosophy
+```
+                   ┌─────────────────┐
+                   │  Identity (IAM) │
+                   └─────────┬───────┘
+                             │
+                 ┌───────────▼───────────┐
+                 │ Infrastructure Layer  │
+                 │ VPC, SG, Isolation    │
+                 └───────────┬───────────┘
+                             │
+               ┌─────────────▼─────────────┐
+               │ Detection & Visibility    │
+               │ CloudTrail / GuardDuty    │
+               └─────────────┬─────────────┘
+                             │
+                 ┌───────────▼───────────┐
+                 │ Incident Response     │
+                 │ EventBridge / Lambda  │
+                 └───────────┬───────────┘
+                             │
+                     ┌───────▼───────┐
+                     │ Governance    │
+                     │ Compliance    │
+                     └───────────────┘
+                     ```
 
 This repository is intentionally:
 
