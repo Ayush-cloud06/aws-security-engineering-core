@@ -8,7 +8,5 @@ resource "aws_s3_bucket_lifecycle_configuration" "retention" {
     expiration {
       days = 365
     }
-
   }
-
 }
